@@ -6,21 +6,23 @@ title:  事件循环
 date:   2021-02-10 13:32:20 -0600
 description: eventloop
 img: posts/20210210/eventStack.png
-tags: [eventloop, 事件循环, js]
+tags: [eventloop]
 author: huangfh
 github: amaynez/GameOfLife/
+toc: true
 ---
-事件循环机制，宏任务，微任务
+## 事件循环机制，宏任务，微任务
 
-前提知识：
+## 前提知识：
 - 浏览器多线程，js单线程。
 - node的异步靠底层的多进程实现。
 - chrome 每个页卡都有一个渲染进程。
 - js是单线程，为了协调事件，用户交互，脚本，ui渲染，网络处理，防止主线程阻塞，事件循环方案应运而生，js每次执行完同步代码，就进入eventloop阶段。
 
 ![浏览器线程](./assets/img/posts/20210210/chromiumThread.png "浏览器线程")
+<small>浏览器线程</small>
 
-定义：
+## 定义：
 ```
 JS引擎常驻于内存中，等待宿主将JS代码或函数传递给它。
 也就是等待宿主环境分配宏观任务，反复等待 - 执行即为事件循环。
@@ -32,7 +34,7 @@ ES6 规范中，microtask 称为 jobs，macrotask 称为 task
 ```
 
 
-浏览器EventLoop：
+## 浏览器EventLoop：
 ![浏览器线程](./assets/img/posts/20210210/eventLoop.png "浏览器线程")
 
 
@@ -45,7 +47,7 @@ ES6 规范中，microtask 称为 jobs，macrotask 称为 task
 
 7. 主线程不断循环上述流程
 
-Node.js的Event Loop
+## Node.js的Event Loop
 Node.js是运行在服务端的js，虽然他也用到了V8引擎，但是他的服务目的和环境不同，导致了他API与原生JS有些区别，他的Event Loop还要处理一些I/O，比如新的网络连接等，所以与浏览器Event Loop也是不一样的。Node的Event Loop是分阶段的，如下图所示：
 ![浏览器线程](./assets/img/posts/20210210/nodejsEventLoop.png "浏览器线程")
 

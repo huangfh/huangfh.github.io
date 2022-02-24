@@ -3,12 +3,12 @@ layout: post
 read_time: true
 show_date: true
 title: "常用算法总结"
-date: 2021-04-02
+date: 2021-04-02 12:32:20 -0600
 img: posts/20210402/post7-header.webp
-tags: [算法]
-category: theory
+tags: [algorithm]
 author: Armando Maynez
 description: "ELI5: what is a neural network."
+toc: yes
 ---
 ## 排序：
 冒泡 插入 选择 交互 快排 希尔排序
@@ -48,3 +48,13 @@ description: "ELI5: what is a neural network."
 开放地址；链式地址；公共溢出区，再哈希
 场景：有一个应用会经常创建、删除节点对象，如何优化。（节点池）
 非递归实现树的后序遍历
+
+5，实现一个快速排序
+https://github.com/anarkh/test/blob/main/arithmetic/quick-sort.js
+
+6，防抖和节流的概念，手动实现相应函数
+https://github.com/anarkh/test/blob/main/utils/debounce-throttle.js
+
+原型链的概念，new操作做了什么
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/new
+
