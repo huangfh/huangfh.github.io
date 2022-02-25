@@ -1436,11 +1436,13 @@ tweet a {
   position: relative;
   padding: 0;
   margin: 0;
-  height: 500px;
+  height: 400px;
   background-color: var(--background);
   overflow: hidden;
 }
-
+.no-image{
+  height:100px;
+}
 .page-image .cover-image {
   height: 100%;
   width: 100%;
@@ -1877,7 +1879,9 @@ img + small, img + br + small {
     padding-bottom: 1em
 }
 .post h1, .post h2,.post h3,.post h4,.post h5,.post h6 {
-    display: none;
+    /* display: none; */
+    font-size:1em;
+    font-weight: normal;
 }
 .post img {
     display: none;
