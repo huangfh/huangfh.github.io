@@ -15,19 +15,19 @@ toc: yes
 ```javascript
 {
  //执行环境
- env: { 
+ env: {
     browser: true,
     commonjs: true,
     es6: true,
     node: true,
-    jquery: true,    
+    jquery: true,
     worker: true,
   },
   parserOptions: {
     sourceType: 'module',
   },
   // 预设好的规则集
-  extends: ['@tencent/eslint-config-tencent', '@tencent/eslint-config-tencent/ts', 'plugin:react/recommended'],
+  extends: ['plugin:react/recommended'],
   settings: {
     react: {
       version: 'detect',
