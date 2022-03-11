@@ -14,9 +14,10 @@ toc: yes
 冒泡 插入 选择 交互 快排 希尔排序
 
 ## 递归
-自顶向下： 大的变成小的
+
 
 ## 动态规划
+自顶向下： 大的变成小的
 自底向上： 小的集成大的
 
 ## 链表
@@ -55,6 +56,5 @@ https://github.com/anarkh/test/blob/main/arithmetic/quick-sort.js
 6，防抖和节流的概念，手动实现相应函数
 https://github.com/anarkh/test/blob/main/utils/debounce-throttle.js
 
-原型链的概念，new操作做了什么
-https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/new
+
 
