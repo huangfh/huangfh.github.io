@@ -10,8 +10,10 @@ infinite: yes
   <form class="search-form inline">
     <div id="search-container">
       <input type="text" id="search-input" class="search" placeholder="Search">
+      <div class="total">total：{{site.posts.size}}</div>
     </div>
   </form>
+
   <ul id="results-container" class="results-search"></ul>
   <div class="post-list">
     {% for post in site.posts limit: 3 %}
