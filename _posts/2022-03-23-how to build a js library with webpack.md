@@ -10,23 +10,88 @@ author: huangfh
 description: ""
 toc: yes
 ---
-proxy 
+webpack library 
 
-reflect: 把对对象的操作收拢到一个命名空间下。符合元编程的思想。例如MATH等
 
-Reflect方法	类似于
 ```javascript
-Reflect.apply(target, thisArgument, argumentsList)	Function.prototype.apply()
-Reflect.construct(target, argumentsList[, newTarget])	new target(…args)
-Reflect.defineProperty(target, prop, attributes)	Object.defineProperty()
-Reflect.deleteProperty(target, prop)	delete target[name]
-Reflect.get(target, prop[, receiver])	target[name]
-Reflect.getOwnPropertyDescriptor(target, prop)	Object.getOwnPropertyDescriptor()
-Reflect.getPrototypeOf(target)	Object.getPrototypeOf()
-Reflect.has(target, prop)	in 运算符
-Reflect.isExtensible(target)	Object.isExtensible()
-Reflect.ownKeys(target)	Object.keys()
-Reflect.preventExtensions(target)	Object.preventExtensions()
-Reflect.set(target, prop, value[, receiver])	target[prop] = value
-Reflect.setPrototypeOf(target, prototype)	Object.setPrototypeOf()
+const path = require('path');
+const webpack = require('webpack');
+const PrettierPlugin = require("prettier-webpack-plugin");
+const TerserPlugin = require('terser-webpack-plugin');
+const getPackageJson = require('./scripts/getPackageJson');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+
+const {
+  version,
+  name,
+  license,
+  repository,
+  author,
+} = getPackageJson('version', 'name', 'license', 'repository', 'author');
+
+const banner = `
+  ${name} v${version}
+  ${repository.url}
+
+  Copyright (c) ${author.replace(/ *\<[^)]*\> */g, " ")} and project contributors.
+
+  This source code is licensed under the ${license} license found in the
+  LICENSE file in the root directory of this source tree.
+`;
+
+module.exports = {
+  mode: "production",
+  devtool: 'source-map',
+  entry: './src/lib/index.js',
+  output: {
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'build'),
+    // library名称
+    library: 'highlight',
+    // 模块规范
+    libraryTarget: 'umd',
+    // 模块导出的方式。此处设置为 export default方式
+    libraryExport: "default",
+    clean: true
+  },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({ extractComments: false }),
+      new OptimizeCSSAssetsPlugin({
+        cssProcessorOptions: {
+          map: {
+            inline: false
+          }
+        }
+      }),
+    ]
+  },
+  module: {
+    rules: [
+      {
+        test: /\.m?js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: 'babel-loader'
+        }
+      },
+      {
+        test: /\.(sa|sc|c)ss$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          { loader: "css-loader", options: { sourceMap: true } },
+        ],
+      }
+    ]
+  },
+  plugins: [
+    new PrettierPlugin(),
+    new MiniCssExtractPlugin({
+      filename: 'index.css'
+    }),
+    new webpack.BannerPlugin(banner)
+  ]
+};
 ```
