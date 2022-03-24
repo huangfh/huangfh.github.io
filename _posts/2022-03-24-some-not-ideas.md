@@ -4,7 +4,7 @@ read_time: true
 show_date: true
 title: "零碎的想法 "
 date: 2022-03-24
-img: idea.jpeg
+img: idea.png
 tags: [idea]
 author: huangfh
 description: ""
