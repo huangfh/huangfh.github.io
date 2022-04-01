@@ -4,7 +4,7 @@ read_time: true
 show_date: true
 title: "内存管理"
 date: 2022-03-09
-# img: posts/20210324/Npm_logo.png
+img: ignition.jpeg
 tags: [memory]
 author: huangfh
 description: ""

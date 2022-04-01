@@ -2,17 +2,25 @@
 layout: post
 read_time: true
 show_date: true
-title: "浏览器架构和运行"
+title: "浏览器架构和运行详解"
 date: 2022-03-15
-# img: posts/20210324/Npm_logo.png
-tags: [browser architecher]
+img: browser-architecher-model.avif
+tags: [browser architecher,render process,v8]
 author: huangfh
 description: ""
 toc: yes
 ---
+<style>
+  center{
+    color: #999;
+    padding: 2px;
+  }
+</style>
 浏览器分为单进程架构和多进程架构。
 
-![浏览器架构](../assets/img/browser-architecher-model.jpeg)
+![浏览器架构](../assets/img/browser-architecher-model.avif)
+<center>浏览器单/多进程架构</center>
+
 ## 一、浏览器单进程架构
 浏览器所有功能都在一个进程内运行。
 
@@ -23,7 +31,8 @@ toc: yes
 
 ## 二、浏览器多进程架构
 
-![](../assets/img/browser-work.jpeg)
+![](../assets/img/browser-work.avif)
+<center>浏览器各进程功能</center>
 
 ### 浏览器主进程
   负责界面展示，用户交互，子进程管理，存储。
@@ -130,17 +139,21 @@ network thread 会执行 DNS 查询，随后为请求建立 TLS 连接。
 
 4. 样式计算  
 仅仅渲染 DOM 还不足以获知页面的具体样式，主进程还会基于 CSS 选择器解析 CSS 获取每一个节点的最终的计算样式值。即使不提供任何 CSS，浏览器对每个元素也会有一个默认的样式。
-![](../assets/img/dom%3Acss.jpeg)
+![](../assets/img/dom%3Acss.avif)
+<center>样式计算</center>
 
 5. 获取布局，生成layput tree  
 想要渲染一个完整的页面，除了获知每个节点的具体样式，还需要获知每一个节点在页面上的位置，布局其实是找到所有元素的几何关系的过程。其具体过程如下：
-![](../assets/img/layout-tree.jpeg)
+![](../assets/img/layout-tree.avif)
+<center>布局树</center>
 通过遍历 DOM 及相关元素的计算样式，主线程会构建出包含每个元素的坐标信息及盒子大小的布局树。布局树和 DOM 树类似，但是其中只包含页面可见的元素，如果一个元素设置了 `display:none` ，这个元素不会出现在布局树上，伪元素虽然在 DOM 树上不可见，但是在布局树上是可见的。
 
 6. 绘制各元素  
 即使知道了不同元素的位置及样式信息，我们还需要知道不同元素的绘制先后顺序才能正确绘制出整个页面。在绘制阶段，主线程会遍历布局树以创建绘制记录。绘制记录可以看做是记录各元素绘制先后顺序的笔记。
 主线程依据布局树构建绘制记录
-![](../assets/img/layout-position.jpeg)
+![](../assets/img/layout-position.avif)
+<center>绘制</center>
+
 防止掉帧：
 You can divide JavaScript operation into small chunks and schedule to run at every frame using requestAnimationFrame(). For more on this topic, please see Optimize JavaScript Execution . You might also run your JavaScript in Web Workers to avoid blocking the main thread.
 
@@ -150,17 +163,18 @@ You can divide JavaScript operation into small chunks and schedule to run at eve
 复合是一种分割页面为不同的层，并单独栅格化，随后组合为帧的技术。不同层的组合由 compositor 线程（合成器线程）完成。
 
 主线程会遍历布局树来创建层树（layer tree），添加了 `will-change` CSS 
-![](../assets/img/layer-tree.jpeg)
+![](../assets/img/layer-tree.avif)
+<center>层树</center>
 
 你可能会想给每一个元素都添加上 `will-change`，不过组合过多的层也许会比在每一帧都栅格化页面中的某些小部分更慢。为了更合理的使用层，可参考 坚持仅合成器的属性和管理层计数 。
 
 一旦层树被创建，渲染顺序被确定，主线程会把这些信息通知给合成器线程，合成器线程会栅格化（rasterizing）每一层。有的层的可以达到整个页面的大小，因此，合成器线程将它们分成多个磁贴，并将每个磁贴发送到栅格线程，栅格线程会栅格化每一个磁贴并存储在 GPU 显存中。
-![](../assets/img/composiiton.jpeg)
+![](../assets/img/composiiton.avif)
 
 一旦磁贴被光栅化，合成器线程会收集称为绘制四边形的磁贴信息以创建合成帧。
 
 合成帧随后会通过 IPC 消息传递给浏览器进程，由于浏览器的 UI 改变或者其它拓展的渲染进程也可以添加合成帧，这些合成帧会被传递给 GPU 用以展示在屏幕上，如果滚动发生，合成器线程会创建另一个合成帧发送给 GPU。
-![](../assets/img/render-gpu.jpeg)
+![](../assets/img/render-gpu.avif)
 合成器的优点在于，其工作无关主线程，合成器线程不需要等待样式计算或者 JS 执行，这就是为什么合成器相关的动画 最流畅，如果某个动画涉及到布局或者绘制的调整，就会涉及到主线程的重新计算，自然会慢很多。
 
 [Inside look at modern web browser (part 3)](https://developer.chrome.com/blog/inside-browser-part3/)

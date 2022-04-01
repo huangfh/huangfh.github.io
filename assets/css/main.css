@@ -478,6 +478,7 @@ svg {
 }
 
 .hidden{display:none}
+.border{ border-bottom: 1px solid var(--grey5);}
 
 .flex-container {
   will-change: opacity;
@@ -757,6 +758,13 @@ svg.menu-icon-house {
 
 .search-form {
   margin-bottom: 15px;
+  position:relative;
+}
+.search-form .total{
+  position:absolute;
+  right:0;
+  top:0;
+  color: var(--grey1);
 }
 
 .search-form .search {
@@ -824,6 +832,7 @@ svg.menu-icon-house {
   list-style: none;
   float: left;
   width: 50%;
+  padding: 5px 5px 0 0;
 }
 
 .post-card {
