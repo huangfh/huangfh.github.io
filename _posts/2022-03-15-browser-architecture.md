@@ -18,7 +18,7 @@ toc: yes
 </style>
 浏览器分为单进程架构和多进程架构。
 
-![浏览器架构](../assets/img/browser-architecher-model.avif)
+![浏览器架构](../assets/img/browser-architecher-model.png)
 <center>浏览器单/多进程架构</center>
 
 ## 一、浏览器单进程架构
@@ -30,17 +30,22 @@ toc: yes
 3. 不安全：所有资源/数据都是公用的，可以获得操作系统权限，有安全风险。
 
 ## 二、浏览器多进程架构
+多进程架构的浏览器，进程组成和各自负责的功能如下图：
 
-![](../assets/img/browser-work.avif)
+![](../assets/img/browser-work.png)
 <center>浏览器各进程功能</center>
 
 ### 浏览器主进程
   负责界面展示，用户交互，子进程管理，存储。
 ### 渲染进程
-渲染进程将html，css，js转换成用户可交互等页面。渲染引擎blink和js引擎V8都运行在该进程中。
-默认情况下，浏览器给每个tab页都分配一个渲染进程。彼此独立。处于安全考虑，渲染进程都运行在沙箱模式下。沙箱：不能在硬盘上写入任何数据，也不能在敏感位置读取任何数据。  
-特殊情况：
-- 一些性能较差的机器，浏览器这些进程还是会合并。
+渲染进程将html，css，js转换成用户可交互等页面。我们熟悉的渲染引擎blink和js引擎V8都运行在该进程中。
+对于渲染进程，默认情况下，浏览器给每个tab页都分配一个渲染进程。彼此独立。出于安全考虑，渲染进程都运行在沙箱模式下。
+<tweet>
+沙箱：不能在硬盘上写入任何数据，也不能在敏感位置读取任何数据。
+</tweet>
+  
+也有一些特殊情况：
+- 一些性能较差的机器，浏览器会把一些进程/服务合并到主进程，以节约内存和cpu的开销。
 - 浏览器打开较多tab时，可能四五十个的时候，如果从一个页面打开了另个页面，且两个页面属于同一个站点的时，新页面会复用父页面的渲染进程，因此可以看到有时候一个页面崩溃，同一站点的其他页面也崩了。
 - iframe也是单独一个进程。Site Isolation 机制从 Chrome 67 开始默认启用。这种机制允许在同一个 Tab 下的跨站 iframe 使用单独的进程来渲染，这样会更为安全。
 
@@ -52,29 +57,30 @@ blink与v8的关系： blink是渲染引擎，v8是blink内置的js引擎。
 webkit和blink的关系： webkit是apple主导的渲染引擎。chrome重构了下webkit，改名blink，大体架构相同。但是，webkit的js引擎是jscore，blink的js引擎是v8.
 </tweet>
 
-备注：
-Chrome 还为我们提供了「任务管理器」，供我们方便的查看当前浏览器中运行的所有进程及每个进程占用的系统资源，右键单击还可以查看更多类别信息。  
-通过「页面右上角的三个点点点 --- 更多工具 --- 任务管理器」即可打开相关面板  
+如何查看浏览器进程？
+Chrome 提供了「任务管理器」，供我们方便的查看当前浏览器中运行的所有进程及每个进程占用的系统资源，右键单击还可以查看更多类别信息。  
+通过「页面右上角的三个点点点 --- 更多工具 --- 任务管理器」即可打开相关面板。  
 
 ### 网络进程
-  网络资源加载。
+  网络资源加载
 ### GPU进程
-  GPU最初是为了实现3d css效果，后来ui界面也都选择用GPU绘制。
+  GPU最初是为了实现3D CSS效果，后来UI界面也都选择用GPU绘制。
 ### storage service
   访问文件等
 ### audio service
   处理音频
 ### 插件进程
-因为插件质量良莠不齐，但它又运行在整个浏览器中，所以需要给他单独分配进程，避免插件崩溃对浏览器和页面造成影响
+chrome为每个chrome插件分配一个进程。原因是：插件质量良莠不齐，但它又运行在整个浏览器中，所以需要给他单独分配进程，避免插件崩溃对浏览器和页面造成影响。
 ### 总结
-多进程模型对缺点：
+多进程模型的优点：安全，稳定，流畅
+多进程模型的缺点：
 1. 更多的资源占用，因为每个进程都要分配单独的资源。
 2. 更复杂的结构。
 
-## 三、从输入地址到页面渲染完成的过程
+## 三、进程协作：从输入地址到页面渲染完成的过程
 ### 1.用户输入地址
 
-ui thread接收用户输入，判断是url还是query
+主进程包含的UI线程接收用户输入，判断是url还是query
 
 ### 2. 发起网络请求
 
@@ -135,11 +141,11 @@ network thread 会执行 DNS 查询，随后为请求建立 TLS 连接。
 6. 绘制各元素  
 即使知道了不同元素的位置及样式信息，我们还需要知道不同元素的绘制先后顺序才能正确绘制出整个页面。在绘制阶段，主线程会遍历布局树以创建绘制记录。绘制记录可以看做是记录各元素绘制先后顺序的笔记。
 主线程依据布局树构建绘制记录
-![](../assets/img/layout-position.avif)
+![](../assets/img/layout-position.png)
 <center>绘制</center>
 
-防止掉帧：
-You can divide JavaScript operation into small chunks and schedule to run at every frame using requestAnimationFrame(). For more on this topic, please see Optimize JavaScript Execution . You might also run your JavaScript in Web Workers to avoid blocking the main thread.
+熟悉性能优化的大家可能都知道，浏览器的帧率60fps，如果想要浏览器不掉帧，要更新的部分需要在1000/60ms内执行完毕，否则就会出现掉帧的现象。我们可以把长任务进行拆解，然后使用requestAnimationFrame方针掉帧或者直接把任务放到worker里去执行。
+
 
 7. 合成帧  
 熟悉 PS 等绘图软件的童鞋肯定对图层这一概念不陌生，现代 Chrome 其实利用了这一概念来组合不同的层。
@@ -147,18 +153,18 @@ You can divide JavaScript operation into small chunks and schedule to run at eve
 复合是一种分割页面为不同的层，并单独栅格化，随后组合为帧的技术。不同层的组合由 compositor 线程（合成器线程）完成。
 
 主线程会遍历布局树来创建层树（layer tree），添加了 `will-change` CSS 
-![](../assets/img/layer-tree.avif)
+![](../assets/img/layer-tree.png)
 <center>层树</center>
 
 你可能会想给每一个元素都添加上 `will-change`，不过组合过多的层也许会比在每一帧都栅格化页面中的某些小部分更慢。为了更合理的使用层，可参考 坚持仅合成器的属性和管理层计数 。
 
 一旦层树被创建，渲染顺序被确定，主线程会把这些信息通知给合成器线程，合成器线程会栅格化（rasterizing）每一层。有的层的可以达到整个页面的大小，因此，合成器线程将它们分成多个磁贴，并将每个磁贴发送到栅格线程，栅格线程会栅格化每一个磁贴并存储在 GPU 显存中。
-![](../assets/img/composiiton.avif)
+![](../assets/img/composiiton.png)
 
 一旦磁贴被光栅化，合成器线程会收集称为绘制四边形的磁贴信息以创建合成帧。
 
 合成帧随后会通过 IPC 消息传递给浏览器进程，由于浏览器的 UI 改变或者其它拓展的渲染进程也可以添加合成帧，这些合成帧会被传递给 GPU 用以展示在屏幕上，如果滚动发生，合成器线程会创建另一个合成帧发送给 GPU。
-![](../assets/img/render-gpu.avif)
+![](../assets/img/render-gpu.png)
 合成器的优点在于，其工作无关主线程，合成器线程不需要等待样式计算或者 JS 执行，这就是为什么合成器相关的动画 最流畅，如果某个动画涉及到布局或者绘制的调整，就会涉及到主线程的重新计算，自然会慢很多。
 
 [Inside look at modern web browser (part 3)](https://developer.chrome.com/blog/inside-browser-part3/)
