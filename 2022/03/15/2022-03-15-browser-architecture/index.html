@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="center{     color: #999;     padding: 2px;   }  浏览器分为单进程架构和多进程架构。  浏览器单&#x2F;多进程架构  一、浏览器单进程架构浏览器所有功能都在一个进程内运行。 缺点  不稳定：某个页面代码&#x2F;插件崩了，导致浏览器整个就崩了。 不流畅：某个页面代码执行耗时，会阻塞进程，导致其他页面的代码也没法响应； 不安全：所有资源&#x2F;数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浏览器架构和运行详解">
+<meta property="og:url" content="http://example.com/2022/03/15/2022-03-15-browser-architecture/index.html">
+<meta property="og:site_name" content="个人博客">
+<meta property="og:description" content="center{     color: #999;     padding: 2px;   }  浏览器分为单进程架构和多进程架构。  浏览器单&#x2F;多进程架构  一、浏览器单进程架构浏览器所有功能都在一个进程内运行。 缺点  不稳定：某个页面代码&#x2F;插件崩了，导致浏览器整个就崩了。 不流畅：某个页面代码执行耗时，会阻塞进程，导致其他页面的代码也没法响应； 不安全：所有资源&#x2F;数据">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/assets/img/browser-architecher-model.avif">
+<meta property="og:image" content="http://example.com/assets/img/browser-work.avif">
+<meta property="og:image" content="http://example.com/assets/img/findProcess.awebp">
+<meta property="og:image" content="http://example.com/assets/img/findTread.awebp">
+<meta property="og:image" content="http://example.com/assets/img/threadViews.png">
+<meta property="og:image" content="http://example.com/assets/img/dom:css.avif">
+<meta property="og:image" content="http://example.com/assets/img/layout-tree.avif">
+<meta property="og:image" content="http://example.com/assets/img/layout-position.avif">
+<meta property="og:image" content="http://example.com/assets/img/layer-tree.avif">
+<meta property="og:image" content="http://example.com/assets/img/composiiton.avif">
+<meta property="og:image" content="http://example.com/assets/img/render-gpu.avif">
+<meta property="og:image" content="http://example.com/assets/img/Compilers.jpeg">
+<meta property="og:image" content="http://example.com/assets/img/v8-parse.jpeg">
+<meta property="og:image" content="http://example.com/assets/img/ignition.jpeg">
+<meta property="og:image" content="http://example.com/assets/img/v8-process.jpeg">
+<meta property="og:image" content="http://example.com/assets/img/complie-1.jpeg">
+<meta property="og:image" content="http://example.com/assets/img/complie-2.jpeg">
+<meta property="og:image" content="http://example.com/assets/img/v8-process-flow.jpeg">
+<meta property="article:published_time" content="2022-03-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-03-02T09:07:17.980Z">
+<meta property="article:author" content="Huangfh">
+<meta property="article:tag" content="browser architecher">
+<meta property="article:tag" content="render process">
+<meta property="article:tag" content="v8">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/img/browser-architecher-model.avif">
+
+<link rel="canonical" href="http://example.com/2022/03/15/2022-03-15-browser-architecture/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>浏览器架构和运行详解 | 个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/03/15/2022-03-15-browser-architecture/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Huangfh">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          浏览器架构和运行详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-15 00:00:00" itemprop="dateCreated datePublished" datetime="2022-03-15T00:00:00+08:00">2022-03-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-03-02 17:07:17" itemprop="dateModified" datetime="2023-03-02T17:07:17+08:00">2023-03-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <style>
+  center{
+    color: #999;
+    padding: 2px;
+  }
+</style>
+<p>浏览器分为单进程架构和多进程架构。</p>
+<p><img src="/../assets/img/browser-architecher-model.avif" alt="浏览器架构"></p>
+<center>浏览器单/多进程架构</center>
+
+<h2 id="一、浏览器单进程架构"><a href="#一、浏览器单进程架构" class="headerlink" title="一、浏览器单进程架构"></a>一、浏览器单进程架构</h2><p>浏览器所有功能都在一个进程内运行。</p>
+<p>缺点</p>
+<ol>
+<li>不稳定：某个页面代码&#x2F;插件崩了，导致浏览器整个就崩了。</li>
+<li>不流畅：某个页面代码执行耗时，会阻塞进程，导致其他页面的代码也没法响应；</li>
+<li>不安全：所有资源&#x2F;数据都是公用的，可以获得操作系统权限，有安全风险。</li>
+</ol>
+<h2 id="二、浏览器多进程架构"><a href="#二、浏览器多进程架构" class="headerlink" title="二、浏览器多进程架构"></a>二、浏览器多进程架构</h2><p><img src="/../assets/img/browser-work.avif"></p>
+<center>浏览器各进程功能</center>
+
+<h3 id="浏览器主进程"><a href="#浏览器主进程" class="headerlink" title="浏览器主进程"></a>浏览器主进程</h3><p>  负责界面展示，用户交互，子进程管理，存储。</p>
+<h3 id="渲染进程"><a href="#渲染进程" class="headerlink" title="渲染进程"></a>渲染进程</h3><p>渲染进程将html，css，js转换成用户可交互等页面。渲染引擎blink和js引擎V8都运行在该进程中。<br>默认情况下，浏览器给每个tab页都分配一个渲染进程。彼此独立。处于安全考虑，渲染进程都运行在沙箱模式下。沙箱：不能在硬盘上写入任何数据，也不能在敏感位置读取任何数据。<br>特殊情况：</p>
+<ul>
+<li>一些性能较差的机器，浏览器这些进程还是会合并。</li>
+<li>浏览器打开较多tab时，可能四五十个的时候，如果从一个页面打开了另个页面，且两个页面属于同一个站点的时，新页面会复用父页面的渲染进程，因此可以看到有时候一个页面崩溃，同一站点的其他页面也崩了。</li>
+<li>iframe也是单独一个进程。Site Isolation 机制从 Chrome 67 开始默认启用。这种机制允许在同一个 Tab 下的跨站 iframe 使用单独的进程来渲染，这样会更为安全。</li>
+</ul>
+<p>扩展概念：<br><tweet><br>blink与v8的关系： blink是渲染引擎，v8是blink内置的js引擎。<br></tweet><br><tweet><br>webkit和blink的关系： webkit是apple主导的渲染引擎。chrome重构了下webkit，改名blink，大体架构相同。但是，webkit的js引擎是jscore，blink的js引擎是v8.<br></tweet></p>
+<h3 id="网络进程"><a href="#网络进程" class="headerlink" title="网络进程"></a>网络进程</h3><p>  网络资源加载。</p>
+<h3 id="GPU进程"><a href="#GPU进程" class="headerlink" title="GPU进程"></a>GPU进程</h3><p>  GPU最初是为了实现3d css效果，后来ui界面也都选择用GPU绘制。</p>
+<h3 id="storage-service"><a href="#storage-service" class="headerlink" title="storage service"></a>storage service</h3><p>  访问文件等</p>
+<h3 id="audio-service"><a href="#audio-service" class="headerlink" title="audio service"></a>audio service</h3><p>  处理音频</p>
+<h3 id="插件进程"><a href="#插件进程" class="headerlink" title="插件进程"></a>插件进程</h3><p>因为插件质量良莠不齐，但它又运行在整个浏览器中，所以需要给他单独分配进程，避免插件崩溃对浏览器和页面造成影响</p>
+<h3 id="如何查看浏览器进程和线程"><a href="#如何查看浏览器进程和线程" class="headerlink" title="如何查看浏览器进程和线程"></a>如何查看浏览器进程和线程</h3><h4 id="查看进程"><a href="#查看进程" class="headerlink" title="查看进程"></a>查看进程</h4><p>Chrome 任务管理器 &amp; 活动监视器<br>Chrome 还为我们提供了「任务管理器」，供我们方便的查看当前浏览器中运行的所有进程及每个进程占用的系统资源，右键单击还可以查看更多类别信息。<br>通过「页面右上角的三个点点点 — 更多工具 — 任务管理器」即可打开相关面板<br><img src="/../assets/img/findProcess.awebp"></p>
+<h4 id="查看线程"><a href="#查看线程" class="headerlink" title="查看线程"></a>查看线程</h4><p>打开 Chrome 任务管理器之后，我们可以找到当前 Tab 页对应的进程 ID，即为 「5194」，接着我们打开 macOS 下的活动监视器，然后选中 「5194」 进程，然后对该进程进行取样操作：<br><img src="/../assets/img/findTread.awebp"></p>
+<p>取样完成后，可以看到当前渲染进程中完整的线程信息.<br><img src="/../assets/img/threadViews.png"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>多进程模型对缺点：</p>
+<ol>
+<li>更多的资源占用，因为每个进程都要分配单独的资源。</li>
+<li>更复杂的结构。</li>
+</ol>
+<h2 id="三、从输入地址到页面渲染完成的过程"><a href="#三、从输入地址到页面渲染完成的过程" class="headerlink" title="三、从输入地址到页面渲染完成的过程"></a>三、从输入地址到页面渲染完成的过程</h2><h3 id="1-用户输入地址"><a href="#1-用户输入地址" class="headerlink" title="1.用户输入地址"></a>1.用户输入地址</h3><p>ui thread接收用户输入，判断是url还是query</p>
+<h3 id="2-发起网络请求"><a href="#2-发起网络请求" class="headerlink" title="2. 发起网络请求"></a>2. 发起网络请求</h3><p>ui thread通知network thread获取网页内容，并控制 tab 上的 spinner 展现，表示正在加载中。</p>
+<p>network thread 会执行 DNS 查询，随后为请求建立 TLS 连接。<br>如果 network thread 接收到了重定向请求头如 301，network thread 会通知 UI thread 服务器要求重定向，之后，另外一个 URL 请求会被触发。</p>
+<h3 id="3-读取响应"><a href="#3-读取响应" class="headerlink" title="3. 读取响应"></a>3. 读取响应</h3><p>当请求响应返回的时候，network thread 会依据 Content-Type 及 MIME Type sniffing 判断响应内容的格式。<br>如果是HTML交给渲染进程，如果是文件，交给下载器。<br><a target="_blank" rel="noopener" href="https://safebrowsing.google.com/">Safe Browsing</a> 检查也会在此时触发，如果域名或者请求内容匹配到已知的恶意站点，network thread 会展示一个警告页。此外<a target="_blank" rel="noopener" href="https://www.chromium.org/Home/chromium-security/corb-for-developers/">CORB</a> 检测也会触发确保敏感数据不会被传递给渲染进程。</p>
+<h3 id="4-分配渲染进程"><a href="#4-分配渲染进程" class="headerlink" title="4. 分配渲染进程"></a>4. 分配渲染进程</h3><p>当上述所有检查完成，network thread 确信浏览器可以导航到请求网页，network thread 会通知 UI thread 数据已经准备好，UI thread 会查找到一个 renderer process 进行网页的渲染。<br><tweet><br>由于网络请求获取响应需要时间，这里其实还存在着一个加速方案。当 UI thread 发送 URL 请求给 network thread 时，浏览器其实已经知道了将要导航到那个站点。UI thread 会并行的预先查找和启动一个渲染进程，如果一切正常，当 network thread 接收到数据时，渲染进程已经准备就绪了，但是如果遇到重定向，准备好的渲染进程也许就不可用了，这时候就需要重启一个新的渲染进程。</tweet></p>
+<h3 id="5-确认导航"><a href="#5-确认导航" class="headerlink" title="5. 确认导航"></a>5. 确认导航</h3><p>以上步骤都准备完毕后，Browser Process 会给 renderer process 发送 IPC 消息来确认导航，一旦 Browser Process 收到 renderer process 的渲染确认消息，导航过程结束，页面加载过程开始。</p>
+<p>此时，地址栏会更新，展示出新页面的网页信息。history tab 会更新，可通过返回键返回导航来的页面，为了让关闭 tab 或者窗口后便于恢复，这些信息会存放在硬盘中。</p>
+<h3 id="6-进行渲染"><a href="#6-进行渲染" class="headerlink" title="6. 进行渲染"></a>6. 进行渲染</h3><p>渲染进程几乎负责 Tab 内的所有事情，渲染进程的核心目的在于转换 HTML CSS JS 为用户可交互的 web 页面。<br>主要流程包括确定文档结构，每个元素样式，坐标，以及绘制顺序，层级。<br>渲染进程中主要包含以下线程：  </p>
+<ul>
+<li>主线程 Main thread</li>
+<li>工作线程 Worker thread</li>
+<li>排版线程 Compositor thread</li>
+<li>光栅线程 Raster thread</li>
+</ul>
+<ol>
+<li><p>构建dom<br>当渲染进程接收到导航的确认信息，开始接受 HTML 数据时，主线程会解析文本字符串为 DOM树。</p>
+</li>
+<li><p>加载次级资源<br>网页中常常包含诸如图片，CSS，JS 等额外的资源，这些资源需要从网络上或者 cache 中获取。主进程可以在构建 DOM 的过程中会逐一请求它们，为了加速， preload scanner 会同时运行，如果在 html 中存在 <code>&lt;img&gt;</code> <code>&lt;link&gt;</code> 等标签，preload scanner 会把这些请求传递给 Browser process 中的 network thread 进行相关资源的下载。</p>
+</li>
+<li><p>JS 的下载与执行<br>当遇到 <code>&lt;script&gt;</code> 标签时，渲染进程会停止解析 HTML，而去加载，解析和执行 JS 代码，停止解析 html 的原因在于 JS 可能会改变 DOM 的结构（使用诸如 <code>document.write()</code>等API）。<br>不过开发者其实也有多种方式来告知浏览器应对如何应对某个资源，比如说如果在<code>&lt;script&gt;</code> 标签上添加了 <code>async</code> 或 <code>defer</code> 等属性，浏览器会异步的加载和执行JS代码，而不会阻塞渲染。更多的方法可参考 <a target="_blank" rel="noopener" href="https://web.dev/fast/#prioritize-resources">Resource Prioritization – Getting the Browser to Help You</a></p>
+</li>
+<li><p>样式计算<br>仅仅渲染 DOM 还不足以获知页面的具体样式，主进程还会基于 CSS 选择器解析 CSS 获取每一个节点的最终的计算样式值。即使不提供任何 CSS，浏览器对每个元素也会有一个默认的样式。<br><img src="/../assets/img/dom:css.avif"></p>
+<center>样式计算</center>
+</li>
+<li><p>获取布局，生成layput tree<br>想要渲染一个完整的页面，除了获知每个节点的具体样式，还需要获知每一个节点在页面上的位置，布局其实是找到所有元素的几何关系的过程。其具体过程如下：<br><img src="/../assets/img/layout-tree.avif"></p>
+<center>布局树</center>
+通过遍历 DOM 及相关元素的计算样式，主线程会构建出包含每个元素的坐标信息及盒子大小的布局树。布局树和 DOM 树类似，但是其中只包含页面可见的元素，如果一个元素设置了 `display:none` ，这个元素不会出现在布局树上，伪元素虽然在 DOM 树上不可见，但是在布局树上是可见的。
+</li>
+<li><p>绘制各元素<br>即使知道了不同元素的位置及样式信息，我们还需要知道不同元素的绘制先后顺序才能正确绘制出整个页面。在绘制阶段，主线程会遍历布局树以创建绘制记录。绘制记录可以看做是记录各元素绘制先后顺序的笔记。<br>主线程依据布局树构建绘制记录<br><img src="/../assets/img/layout-position.avif"></p>
+<center>绘制</center></li>
+</ol>
+<p>防止掉帧：<br>You can divide JavaScript operation into small chunks and schedule to run at every frame using requestAnimationFrame(). For more on this topic, please see Optimize JavaScript Execution . You might also run your JavaScript in Web Workers to avoid blocking the main thread.</p>
+<ol start="7">
+<li>合成帧<br>熟悉 PS 等绘图软件的童鞋肯定对图层这一概念不陌生，现代 Chrome 其实利用了这一概念来组合不同的层。</li>
+</ol>
+<p>复合是一种分割页面为不同的层，并单独栅格化，随后组合为帧的技术。不同层的组合由 compositor 线程（合成器线程）完成。</p>
+<p>主线程会遍历布局树来创建层树（layer tree），添加了 <code>will-change</code> CSS<br><img src="/../assets/img/layer-tree.avif"></p>
+<center>层树</center>
+
+<p>你可能会想给每一个元素都添加上 <code>will-change</code>，不过组合过多的层也许会比在每一帧都栅格化页面中的某些小部分更慢。为了更合理的使用层，可参考 坚持仅合成器的属性和管理层计数 。</p>
+<p>一旦层树被创建，渲染顺序被确定，主线程会把这些信息通知给合成器线程，合成器线程会栅格化（rasterizing）每一层。有的层的可以达到整个页面的大小，因此，合成器线程将它们分成多个磁贴，并将每个磁贴发送到栅格线程，栅格线程会栅格化每一个磁贴并存储在 GPU 显存中。<br><img src="/../assets/img/composiiton.avif"></p>
+<p>一旦磁贴被光栅化，合成器线程会收集称为绘制四边形的磁贴信息以创建合成帧。</p>
+<p>合成帧随后会通过 IPC 消息传递给浏览器进程，由于浏览器的 UI 改变或者其它拓展的渲染进程也可以添加合成帧，这些合成帧会被传递给 GPU 用以展示在屏幕上，如果滚动发生，合成器线程会创建另一个合成帧发送给 GPU。<br><img src="/../assets/img/render-gpu.avif"><br>合成器的优点在于，其工作无关主线程，合成器线程不需要等待样式计算或者 JS 执行，这就是为什么合成器相关的动画 最流畅，如果某个动画涉及到布局或者绘制的调整，就会涉及到主线程的重新计算，自然会慢很多。</p>
+<p><a target="_blank" rel="noopener" href="https://developer.chrome.com/blog/inside-browser-part3/">Inside look at modern web browser (part 3)</a></p>
+<h2 id="四、V8引擎"><a href="#四、V8引擎" class="headerlink" title="四、V8引擎"></a>四、V8引擎</h2><p>简单的说，v8是一款js引擎，为啥需要js引擎呢？<br>cpu只认识自己的指令集，指令集对应着汇编代码。并且不同类型的cpu的指令集是不同的。js引擎可以将js代码编译为不同cpu（intel，ARM，MIPS等）对应的汇编代码。</p>
+<p>整个过程：高级语言-》汇编代码-》机器指令（二进制）。</p>
+<p>v8则是chrome和nodejs，安卓设备在用的js引擎，也是目前使用最广泛的js引擎（也可称为js虚拟机）。<br>D8 是调试工具，用于查看v8在执行js过程中的各种中间数据，比如作用域、AST、字节码、优化的二进制代码、垃圾回收的状态，还可以使用 d8 提供的私有 API 查看一些内部信息。</p>
+<p>v8引擎的内部结构<br>V8 是一个非常复杂的项目，有超过 100 万行 C++代码。它由许多子模块构成，其中这 4 个模块是最重要的：</p>
+<h3 id="Parse"><a href="#Parse" class="headerlink" title="Parse"></a>Parse</h3><p>负责将js源代码转换为AST（抽象语法树：abstract syntax tree）。这里涉及到编译原理的知识，所以先理清下一些基础的编译原理的概念。</p>
+<h4 id="编译原理的流程："><a href="#编译原理的流程：" class="headerlink" title="编译原理的流程："></a>编译原理的流程：</h4><p><img src="/../assets/img/Compilers.jpeg" alt="编译原理流程"><br>词法分析（lexical analysis或者scanning）和词法分析程序（lexical analyzer 或 scanner）：对源程序的字符流进行扫描，根据构词规则识别成单词。整个过程也就是“分词”。</p>
+<p>语法分析（syntax analysis）和语法分析程序（parser）：将词法分析基础上的单词组合成各类型语法短句。如 if语句，for语句等。</p>
+<p>语义分析（syntax analysis）：进行语义检查。</p>
+<h4 id="parse流程"><a href="#parse流程" class="headerlink" title="parse流程"></a>parse流程</h4><p><img src="/../assets/img/v8-parse.jpeg" alt="v8 parse过程" title="v8 parse过程"></p>
+<h3 id="Ignition"><a href="#Ignition" class="headerlink" title="Ignition"></a>Ignition</h3><tweet>
+即解释器，负责将 AST 转换为 Bytecode，解释执行 Bytecode；同时收集 TurboFan 优化编译所需的信息，比如函数参数的类型；解释器执行时主要有四个模块，内存中的字节码、寄存器、栈、堆。
+</tweet>
+
+<h4 id="解释器的流程"><a href="#解释器的流程" class="headerlink" title="解释器的流程"></a>解释器的流程</h4><p><img src="/../assets/img/ignition.jpeg" alt="ignition"><br>参考资料：<a target="_blank" rel="noopener" href="https://time.geekbang.org/column/article/224908">解释器是如何解释执行字节码的?</a>{:target&#x3D;”_blank”}</p>
+<h3 id="TurboFan"><a href="#TurboFan" class="headerlink" title="TurboFan"></a>TurboFan</h3> <tweet>
+ compiler，即编译器，利用 Ignition 所收集的类型信息，将 Bytecode 转换为优化的汇编代码；
+ </tweet>
+
+<h3 id="Orinoco"><a href="#Orinoco" class="headerlink" title="Orinoco"></a>Orinoco</h3><tweet>
+garbage collector，垃圾回收模块，负责将程序不再需要的内存空间回收。
+</tweet>
+
+<p>总结：<br><img src="/../assets/img/v8-process.jpeg" alt="v8各部分协作流程"></p>
+<p>简单地说，Parser 将 JS 源码转换为 AST，然后 Ignition 将 AST 转换为 Bytecode，最后 TurboFan 将 Bytecode 转换为经过优化的 Machine Code(实际上是汇编代码)。</p>
+<h3 id="编译执行和解释执行"><a href="#编译执行和解释执行" class="headerlink" title="编译执行和解释执行"></a>编译执行和解释执行</h3><p>解释执行</p>
+<p>需要先将输入的源代码通过解析器编译成中间代码，之后直接使用解释器解释执行中间代码，然后直接输出结果。具体流程如下图所示：<br><img src="/../assets/img/complie-1.jpeg" alt="解释执行流程图"></p>
+<p>编译执行</p>
+<p>采用这种方式时，也需要先将源代码转换为中间代码，然后我们的编译器再将中间代码编译成机器代码。通常编译成的机器代码是以二进制文件形式存储的，需要执行这段程序的时候直接执行二进制文件就可以了。还可以使用虚拟机将编译后的机器代码保存在内存中，然后直接执行内存中的二进制代码。<br><img src="/../assets/img/complie-2.jpeg" alt="编译执行流程图"></p>
+<p>总结：</p>
+<p>解释执行和编译执行都有各自的优缺点<br>解释执行启动速度快，但是执行时速度慢，而编译执行启动速度慢，但是执行速度快。为了充分地利用解释执行和编译执行的优点，规避其缺点，V8 采用了一种权衡策略，在启动过程中采用了解释执行的策略，但是如果某段代码的执行频率超过一个值，那么 V8 就会采用优化编译器将其编译成执行效率更加高效的机器代码。</p>
+<h3 id="V8-是怎么执行一段-JavaScript-代码的？"><a href="#V8-是怎么执行一段-JavaScript-代码的？" class="headerlink" title="V8 是怎么执行一段 JavaScript 代码的？"></a>V8 是怎么执行一段 JavaScript 代码的？</h3><p>在 V8 出现之前，所有的 JavaScript 虚拟机所采用的都是解释执行的方式，「这是 JavaScript 执行速度过慢的一个主要原因」。而 V8 率先引入了即时编译（JIT）的双轮驱动的设计，这是一种权衡策略，混合编译执行和解释执行这两种手段，给 JavaScript 的执行速度带来了极大的提升。</p>
+<p>另外，V8 也是早于其他虚拟机引入了惰性编译、内联缓存、隐藏类等机制，进一步优化了 JavaScript 代码的编译执行效率。V8 的出现，将 JavaScript 虚拟机技术推向了一个全新的高度。</p>
+<p>接着通过下图，我们一起看看 V8 执行 JavaScript 代码的完整流程：</p>
+<p><img src="/../assets/img/v8-process-flow.jpeg" alt="V8编译流水线---引用自《极客时间-图解 Google V8》"></p>
+<p>V8 执行一段 JavaScript 代码所经历的主要流程包括：</p>
+<p>初始化基础环境；</p>
+<p>解析源码生成 AST 和作用域；</p>
+<p>依据 AST 和作用域生成字节码；</p>
+<p>解释执行字节码；</p>
+<p>监听热点代码；</p>
+<p>优化热点代码为二进制的机器代码；</p>
+<p>反优化生成的二进制机器代码。</p>
+<p>V8编译流水线并不复杂，但其中涉及到了很多技术，诸如 JIT、延迟解析、隐藏类、内联缓存、事件循环系统、垃圾回收机制等等。这些技术决定着一段 JavaScript 代码能否正常执行，以及代码的执行效率。对提的几个名词做个简单介绍：</p>
+<p>「隐藏类（Hide Class）」：是将 JavaScript 中动态类型转换为静态类型的一种技术，可以消除动态类型的语言执行速度过慢的问题。熟悉 了 V8 的工作机制，在编写 JavaScript 时，就能充分利用好隐藏类这种强大的优化特性，写出更加高效的代码。</p>
+<p>「惰性解析」：它目的是为了加速代码的启动速度，通过对惰性解析机制的学习，可以优化代码更加适应这个机制，从而提高程序性能。</p>
+<p>「V8事件循环系统」：事件循环系统和 JavaScript 中的难点异步编程特性紧密相关。JavaScript 是单线程的，JavaScript 代码都是在一个线程上执行，如果同一时间发送了多个 JavaScript 执行的请求，就需要排队，也就是进行异步编程。而V8事件循环系统会调度这些排队任务，保证 JavaScript 代码被 V8 有序地执行。因此也可以说，事件循环系统就是 V8 的心脏，它驱动了 V8 的持续工作。</p>
+<p>「垃圾回收机制」：自动垃圾回收是一种在堆内存中找出哪些对象在被使用，还有哪些对象没被使用，并且将后者删掉的机制。所谓使用中的对象（已引用对象），指的是程序中有指针指向的对象；而未使用中的对象（未引用对象），则没有被任何指针给指向，因此占用的内存也可以被回收掉。而JavaScript 也是一种自动垃圾回收的语言。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/browser-architecher/" rel="tag"># browser architecher</a>
+              <a href="/tags/render-process/" rel="tag"># render process</a>
+              <a href="/tags/v8/" rel="tag"># v8</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/03/09/2022-03-09-memory-management/" rel="prev" title="内存管理">
+      <i class="fa fa-chevron-left"></i> 内存管理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/03/24/2022-03-24-why%20blog/" rel="next" title="我为什么写博客">
+      我为什么写博客 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%B5%8F%E8%A7%88%E5%99%A8%E5%8D%95%E8%BF%9B%E7%A8%8B%E6%9E%B6%E6%9E%84"><span class="nav-number">1.</span> <span class="nav-text">一、浏览器单进程架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%B5%8F%E8%A7%88%E5%99%A8%E5%A4%9A%E8%BF%9B%E7%A8%8B%E6%9E%B6%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">二、浏览器多进程架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%BB%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.1.</span> <span class="nav-text">浏览器主进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B8%B2%E6%9F%93%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.2.</span> <span class="nav-text">渲染进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.3.</span> <span class="nav-text">网络进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GPU%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.4.</span> <span class="nav-text">GPU进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#storage-service"><span class="nav-number">2.5.</span> <span class="nav-text">storage service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#audio-service"><span class="nav-number">2.6.</span> <span class="nav-text">audio service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%92%E4%BB%B6%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.7.</span> <span class="nav-text">插件进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E6%9F%A5%E7%9C%8B%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%9B%E7%A8%8B%E5%92%8C%E7%BA%BF%E7%A8%8B"><span class="nav-number">2.8.</span> <span class="nav-text">如何查看浏览器进程和线程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.8.1.</span> <span class="nav-text">查看进程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%BA%BF%E7%A8%8B"><span class="nav-number">2.8.2.</span> <span class="nav-text">查看线程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">2.9.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E4%BB%8E%E8%BE%93%E5%85%A5%E5%9C%B0%E5%9D%80%E5%88%B0%E9%A1%B5%E9%9D%A2%E6%B8%B2%E6%9F%93%E5%AE%8C%E6%88%90%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">三、从输入地址到页面渲染完成的过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%94%A8%E6%88%B7%E8%BE%93%E5%85%A5%E5%9C%B0%E5%9D%80"><span class="nav-number">3.1.</span> <span class="nav-text">1.用户输入地址</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%8F%91%E8%B5%B7%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82"><span class="nav-number">3.2.</span> <span class="nav-text">2. 发起网络请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%AF%BB%E5%8F%96%E5%93%8D%E5%BA%94"><span class="nav-number">3.3.</span> <span class="nav-text">3. 读取响应</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%88%86%E9%85%8D%E6%B8%B2%E6%9F%93%E8%BF%9B%E7%A8%8B"><span class="nav-number">3.4.</span> <span class="nav-text">4. 分配渲染进程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E7%A1%AE%E8%AE%A4%E5%AF%BC%E8%88%AA"><span class="nav-number">3.5.</span> <span class="nav-text">5. 确认导航</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E8%BF%9B%E8%A1%8C%E6%B8%B2%E6%9F%93"><span class="nav-number">3.6.</span> <span class="nav-text">6. 进行渲染</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81V8%E5%BC%95%E6%93%8E"><span class="nav-number">4.</span> <span class="nav-text">四、V8引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Parse"><span class="nav-number">4.1.</span> <span class="nav-text">Parse</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86%E7%9A%84%E6%B5%81%E7%A8%8B%EF%BC%9A"><span class="nav-number">4.1.1.</span> <span class="nav-text">编译原理的流程：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#parse%E6%B5%81%E7%A8%8B"><span class="nav-number">4.1.2.</span> <span class="nav-text">parse流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Ignition"><span class="nav-number">4.2.</span> <span class="nav-text">Ignition</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%E5%99%A8%E7%9A%84%E6%B5%81%E7%A8%8B"><span class="nav-number">4.2.1.</span> <span class="nav-text">解释器的流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TurboFan"><span class="nav-number">4.3.</span> <span class="nav-text">TurboFan</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Orinoco"><span class="nav-number">4.4.</span> <span class="nav-text">Orinoco</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%89%A7%E8%A1%8C%E5%92%8C%E8%A7%A3%E9%87%8A%E6%89%A7%E8%A1%8C"><span class="nav-number">4.5.</span> <span class="nav-text">编译执行和解释执行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#V8-%E6%98%AF%E6%80%8E%E4%B9%88%E6%89%A7%E8%A1%8C%E4%B8%80%E6%AE%B5-JavaScript-%E4%BB%A3%E7%A0%81%E7%9A%84%EF%BC%9F"><span class="nav-number">4.6.</span> <span class="nav-text">V8 是怎么执行一段 JavaScript 代码的？</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Huangfh</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huangfh</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

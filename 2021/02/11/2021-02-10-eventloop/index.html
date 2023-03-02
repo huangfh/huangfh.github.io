@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="eventloop">
+<meta property="og:type" content="article">
+<meta property="og:title" content="事件循环">
+<meta property="og:url" content="http://example.com/2021/02/11/2021-02-10-eventloop/index.html">
+<meta property="og:site_name" content="个人博客">
+<meta property="og:description" content="eventloop">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/assets/img/posts/20210210/chromiumThread.png">
+<meta property="og:image" content="http://example.com/assets/img/posts/20210210/eventLoop.png">
+<meta property="og:image" content="http://example.com/assets/img/posts/20210210/nodejsEventLoop.png">
+<meta property="og:image" content="http://example.com/assets/img/posts/20210210/eventStack.png">
+<meta property="article:published_time" content="2021-02-10T19:32:20.000Z">
+<meta property="article:modified_time" content="2023-03-02T09:07:17.978Z">
+<meta property="article:author" content="Huangfh">
+<meta property="article:tag" content="eventloop">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/img/posts/20210210/chromiumThread.png">
+
+<link rel="canonical" href="http://example.com/2021/02/11/2021-02-10-eventloop/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>事件循环 | 个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/02/11/2021-02-10-eventloop/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Huangfh">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          事件循环
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-02-11 03:32:20" itemprop="dateCreated datePublished" datetime="2021-02-11T03:32:20+08:00">2021-02-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-03-02 17:07:17" itemprop="dateModified" datetime="2023-03-02T17:07:17+08:00">2023-03-02</time>
+              </span>
+
+          
+            <div class="post-description">eventloop</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="事件循环机制，宏任务，微任务"><a href="#事件循环机制，宏任务，微任务" class="headerlink" title="事件循环机制，宏任务，微任务"></a>事件循环机制，宏任务，微任务</h2><h2 id="前提知识："><a href="#前提知识：" class="headerlink" title="前提知识："></a>前提知识：</h2><ul>
+<li>浏览器多线程，js单线程。</li>
+<li>node的异步靠底层的多进程实现。</li>
+<li>chrome 每个页卡都有一个渲染进程。</li>
+<li>js是单线程，为了协调事件，用户交互，脚本，ui渲染，网络处理，防止主线程阻塞，事件循环方案应运而生，js每次执行完同步代码，就进入eventloop阶段。</li>
+</ul>
+<p><img src="/./assets/img/posts/20210210/chromiumThread.png" alt="浏览器线程" title="浏览器线程"><br><small>浏览器线程</small></p>
+<h2 id="定义："><a href="#定义：" class="headerlink" title="定义："></a>定义：</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">JS引擎常驻于内存中，等待宿主将JS代码或函数传递给它。</span><br><span class="line">也就是等待宿主环境分配宏观任务，反复等待 - 执行即为事件循环。</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ES6 规范中，microtask 称为 jobs，macrotask 称为 task</span><br><span class="line">宏任务是由宿主发起的，而微任务由JavaScript自身发起。</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="浏览器EventLoop："><a href="#浏览器EventLoop：" class="headerlink" title="浏览器EventLoop："></a>浏览器EventLoop：</h2><p><img src="/./assets/img/posts/20210210/eventLoop.png" alt="浏览器线程" title="浏览器线程"></p>
+<ol>
+<li><p>主线程每次执行时，先看看要执行的是同步任务，还是异步的API</p>
+</li>
+<li><p>同步任务就继续执行，一直执行完</p>
+</li>
+<li><p>遇到异步API就将它交给对应的异步线程，自己继续执行同步任务</p>
+</li>
+<li><p>异步线程执行异步API，执行完后，将异步回调事件放入事件队列上</p>
+</li>
+<li><p>主线程手上的同步任务干完后就来事件队列看看有没有任务</p>
+</li>
+<li><p>主线程发现事件队列有任务，执行每个宏任务前先执行完所有的微任务。执行完微任务渲染，执行完每个宏任务渲染。同一层级，先宏任务，宏任务时创建的微任务一次性执行完，然后下一个宏任务。</p>
+</li>
+<li><p>主线程不断循环上述流程</p>
+</li>
+</ol>
+<h2 id="Node-js的Event-Loop"><a href="#Node-js的Event-Loop" class="headerlink" title="Node.js的Event Loop"></a>Node.js的Event Loop</h2><p>Node.js是运行在服务端的js，虽然他也用到了V8引擎，但是他的服务目的和环境不同，导致了他API与原生JS有些区别，他的Event Loop还要处理一些I&#x2F;O，比如新的网络连接等，所以与浏览器Event Loop也是不一样的。Node的Event Loop是分阶段的，如下图所示：<br><img src="/./assets/img/posts/20210210/nodejsEventLoop.png" alt="浏览器线程" title="浏览器线程"></p>
+<ol>
+<li>timers: 执行 setTimeoutsetInterval的回调</li>
+<li>pending callbacks: 执行延迟到下一个循环迭代的 I&#x2F;O 回调</li>
+<li>idle, prepare: 仅系统内部使用</li>
+<li>poll: 检索新的 I&#x2F;O 事件;执行与 I&#x2F;O 相关的回调。事实上除了其他几个阶段处理的事情，其他几乎所有的异步都在这个阶段处理。</li>
+<li>check: setImmediate</li>
+<li>close callbacks: 一些关闭的回调函数，如：socket.on(‘close’, …)</li>
+</ol>
+<p><img src="/./assets/img/posts/20210210/eventStack.png" alt="浏览器线程" title="浏览器线程"></p>
+<p>|  | 宏任务（macrotask）      | 微任务（microtask） |<br>| 谁发起的 | 宿主（Node、浏览器） | JS引擎 |<br>| 谁先运行 | 后运行 | 先运行 |<br>| 会触发新一轮Tick吗 | 会 | 不会 |</p>
+<p>具体事件	1. script (可以理解为外层同步代码)<br>2. setTimeout&#x2F;setInterval<br>3. UI rendering&#x2F;UI事件<br>4. postMessage，MessageChannel<br>5. setImmediate，I&#x2F;O（Node.js）<br>    1. Promise<br>2. MutaionObserver<br>3. Object.observe（已废弃；Proxy 对象替代）<br>4. process.nextTick（Node.js）</p>
+<p>谁先运行	后运行	先运行<br>会触发新一轮Tick吗	会	不会</p>
+<p>区分好哪写是宏任务，哪写是微任务，然后node11之前循环是宏任务列表全部执行完毕再执行微任务列表全部任务，依次循环，11之后和浏览器一样，执行一个宏任务-》清空微任务列表-》一个宏任务这样循环</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/eventloop/" rel="tag"># eventloop</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/01/26/2021-01-25-prototype/" rel="prev" title="原型链">
+      <i class="fa fa-chevron-left"></i> 原型链
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/03/01/2021-02-28-functions/" rel="next" title="数组/对象/字符串常用方法">
+      数组/对象/字符串常用方法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF%E6%9C%BA%E5%88%B6%EF%BC%8C%E5%AE%8F%E4%BB%BB%E5%8A%A1%EF%BC%8C%E5%BE%AE%E4%BB%BB%E5%8A%A1"><span class="nav-number">1.</span> <span class="nav-text">事件循环机制，宏任务，微任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E6%8F%90%E7%9F%A5%E8%AF%86%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">前提知识：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">定义：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8F%E8%A7%88%E5%99%A8EventLoop%EF%BC%9A"><span class="nav-number">4.</span> <span class="nav-text">浏览器EventLoop：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Node-js%E7%9A%84Event-Loop"><span class="nav-number">5.</span> <span class="nav-text">Node.js的Event Loop</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Huangfh</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huangfh</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
