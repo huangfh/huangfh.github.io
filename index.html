@@ -880,74 +880,6 @@ garbage collector，垃圾回收模块，负责将程序不再需要的内存空
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/02/24/2022-02-24-linux/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Huangfh">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/02/24/2022-02-24-linux/" class="post-title-link" itemprop="url">linux常用命令</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-02-24 00:00:00" itemprop="dateCreated datePublished" datetime="2022-02-24T00:00:00+08:00">2022-02-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2023-03-02 17:07:17" itemprop="dateModified" datetime="2023-03-02T17:07:17+08:00">2023-03-02</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>linux命令：</p>
-<p>shell是linux命令集。<br>目录&#x2F;文件：cd mkdir rm mp mv  touch cat<br>文件编辑：insert esc :wq<br>ps：进程状态<br>grep：用正则查找字符</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"></span><br><span class="line">bashPath=/usr/local/app</span><br><span class="line">serverPath=/usr/local/application/bin</span><br><span class="line">logFile=$bashPath/start.log</span><br><span class="line">logHisFile=$bashPath/start_history.log</span><br><span class="line">server=app.js</span><br><span class="line"></span><br><span class="line">source /etc/profile</span><br><span class="line"></span><br><span class="line">if [ ! -d $bashPath ];then</span><br><span class="line">    mkdir -p $bashPath</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line">chmod a+x $serverPath/</span><br><span class="line"># 启动进程 </span><br><span class="line"># 2&gt;&amp;1 0:标准输入 1:标准输出 2:标准错误输出 错误输出统一到标准输出里。</span><br><span class="line"># tee 将输入保存到文件  </span><br><span class="line">nohup node $serverPath/$server 2&gt;&amp;1 | tee $logFile &gt;&gt;$logHisFile 2&gt;&amp;1 &amp;</span><br><span class="line"></span><br><span class="line">sleep 3</span><br><span class="line">#判断进程状态，是否正常启动。wc：统计字节数</span><br><span class="line">num=`ps -ef |grep $serverPath/$server |grep -v grep|wc -l`</span><br><span class="line">echo &quot;the num of process after start is $num&quot;&gt;&gt;$logFile</span><br><span class="line">if [ $num -lt 1 ];then</span><br><span class="line">    echo &quot;the process is not exit after start &quot;&gt;&gt;$logFile</span><br><span class="line">    exit 1</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line">exit 0</span><br><span class="line"></span><br><span class="line">#  关闭进程</span><br><span class="line">pidInfo=$(ps -ef | grep &quot;$serverPath/$server&quot; | grep -v grep | awk &#x27;&#123;print $2&#125;&#x27;)</span><br><span class="line">for pid in $pidInfo;do</span><br><span class="line">	kill -9 $pid</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://example.com/2022/02/24/2022-02-24-promise/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1002,6 +934,74 @@ garbage collector，垃圾回收模块，负责将程序不再需要的内存空
 </ul>
 <p>手动实现一个Promise,扩展：实现一个Promise.All</p>
 <p><a target="_blank" rel="noopener" href="https://github.com/anarkh/test/blob/main/utils/promise.js">https://github.com/anarkh/test/blob/main/utils/promise.js</a><br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32913092">promise详解与实现</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/02/24/2022-02-24-linux/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Huangfh">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/02/24/2022-02-24-linux/" class="post-title-link" itemprop="url">linux常用命令</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-02-24 00:00:00" itemprop="dateCreated datePublished" datetime="2022-02-24T00:00:00+08:00">2022-02-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-03-02 17:07:17" itemprop="dateModified" datetime="2023-03-02T17:07:17+08:00">2023-03-02</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>linux命令：</p>
+<p>shell是linux命令集。<br>目录&#x2F;文件：cd mkdir rm mp mv  touch cat<br>文件编辑：insert esc :wq<br>ps：进程状态<br>grep：用正则查找字符</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"></span><br><span class="line">bashPath=/usr/local/app</span><br><span class="line">serverPath=/usr/local/application/bin</span><br><span class="line">logFile=$bashPath/start.log</span><br><span class="line">logHisFile=$bashPath/start_history.log</span><br><span class="line">server=app.js</span><br><span class="line"></span><br><span class="line">source /etc/profile</span><br><span class="line"></span><br><span class="line">if [ ! -d $bashPath ];then</span><br><span class="line">    mkdir -p $bashPath</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line">chmod a+x $serverPath/</span><br><span class="line"># 启动进程 </span><br><span class="line"># 2&gt;&amp;1 0:标准输入 1:标准输出 2:标准错误输出 错误输出统一到标准输出里。</span><br><span class="line"># tee 将输入保存到文件  </span><br><span class="line">nohup node $serverPath/$server 2&gt;&amp;1 | tee $logFile &gt;&gt;$logHisFile 2&gt;&amp;1 &amp;</span><br><span class="line"></span><br><span class="line">sleep 3</span><br><span class="line">#判断进程状态，是否正常启动。wc：统计字节数</span><br><span class="line">num=`ps -ef |grep $serverPath/$server |grep -v grep|wc -l`</span><br><span class="line">echo &quot;the num of process after start is $num&quot;&gt;&gt;$logFile</span><br><span class="line">if [ $num -lt 1 ];then</span><br><span class="line">    echo &quot;the process is not exit after start &quot;&gt;&gt;$logFile</span><br><span class="line">    exit 1</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line">exit 0</span><br><span class="line"></span><br><span class="line">#  关闭进程</span><br><span class="line">pidInfo=$(ps -ef | grep &quot;$serverPath/$server&quot; | grep -v grep | awk &#x27;&#123;print $2&#125;&#x27;)</span><br><span class="line">for pid in $pidInfo;do</span><br><span class="line">	kill -9 $pid</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+
 
       
     </div>
