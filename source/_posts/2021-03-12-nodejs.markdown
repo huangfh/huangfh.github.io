@@ -1,0 +1,68 @@
+---
+layout: post
+read_time: true
+show_date: true
+title: 《深入浅出nodejs》学习笔记
+date:   2021-03-12 13:32:20 -0600
+description: nodejs学习笔记.
+img: posts/20210312/Node.js_logo.png
+tags: [nodejs]
+author: Armando Maynez
+github: amaynez/TicTacToe/blob/7bf83b3d5c10adccbeb11bf244fe0af8d9d7b036/entities/Neural_Network.py#L199
+mathjax: yes # leave empty or erase to prevent the mathjax javascript from loading
+toc: yes # leave empty or erase for no TOC
+---
+
+## Nodejs初衷
+
+事件循环机制，非阻塞io，适合io频繁的场景。
+
+## 模块机制
+Node基于v8，又实现commonjs 。export module. Exports 一个可以expot多个，一个一个。require 认module. Exports
+底层libuv，跨平台的一层封装，更方便的底层操作，封装了事件循环，文件等。
+结构：核心模块 (c++内建模块，js模块)，文件模块(Js模块，C++扩展， 需要用node-gyp编译成. node文件。)
+
+## 运行
+核心模块已经编译成二进制，且部分内存加载。所有模块都有缓存，也就是编译后的对象，二次加载时，优先从缓存。文件模块按路径寻找。
+
+## 内存
+内存限制：1.4g，因为基于v8的原因，v8本来用于浏览器端，所以够用。内存回收：两种。新/旧。新有一种算法，分两半，来回复制，空间换时间。旧 引用清除，有碎片，然后优化算法，有移动。
+
+## Stream
+处理大文件。直接用底层c++，所以不受内存限制。流内存分配：小对象，大对象。小对象共享，大对象独占。一次申请，多次分配。流的读写，尤其读时，要用数组拼接，而不是字符串。流也可以茄汁编码方式，和起始位置。
+
+## Web应用
+请求 处理 响应/渲染
+请求头:请求方法（get put post delete） url解析；cookie；session（ 模拟session，缓存，利用redis等）；xss（页面里加入脚本执行）；csrf（跨站攻击，伪造当前登陆用户的操作。访问b站的时候 带着a站的信息。解决就是给一个csrftoken）；路由；中间件；
+数据的处理（formdata json xml 文件）；mime
+缓存：if modefied（服务器 客户端时间不一致）；etag（以文件内容当hash）；expired（同样有时间不一致的问题），max-age （不用与服务器进行交互））；
+模板：解析字符串；解析时也需要缓存；bigpipe（先渲染不需要数据的部门，然后数据填充。相比于ajax，不需要重新创建一个网络请求。 基础是分段传输，需要浏览器支持，http 1.1 需要设置Transfer-Encoding为chunked，http2.0默认支持）
+
+## 进程
+node单进程，不能充分利用多核cpu；当前线程异常会直接退出；
+多进程：child_process模块。spwn（任何进程 命令 例 exec('node',[server.js])），exec(例 exec(node server.js, function(){})多一个callback)，execFile( 可执行文件)，fork（node进程，文件）。创建子进程，端口复用，进程通信（ipc管道；句柄）
+
+## 产品化
+效率：多进程
+稳定性：需要进程管理。
+容灾：多机器，多机房，主从模式
+测试：业务拆分简单，方便写测试用例
+日志：console不同等级。日志存储与分析。
+监控：业务逻辑监控(通过日志实现)，响应时间(Qps)，进程状态，cpu，内存，磁盘，网络流量，dns
+
+## pm2:
+进程管理，
+负载均衡，pm2 start app.js -i max
+日志分割，pm2 logs   log4js pm2-logrotate
+终端监控，pm2 monit   监控可视化：pm2-web
+监听模式，pm2 start app.js --watch   
+0s停机重启，pm2 reload app.js(至少始终一个进程在运行)
+
+## 附录
+ ![nodejs frame](./assets//img/posts/20210312/nodejs_frame.png)
+ ![nodejs modules](./assets//img/posts/20210312/nodejs_modules.png)
+
+## 一些学习链接
+1. [《深入理解Node.js：核心思想与源码分析》](https://yjhjstz.gitbooks.io/deep-into-node/content/)
+2. [《node.js技术架构》](https://zhuanlan.zhihu.com/p/197400183)
+
